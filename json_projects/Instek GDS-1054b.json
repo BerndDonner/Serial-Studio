@@ -1,0 +1,44 @@
+{
+    "actions": [
+        {
+            "eol": "\n",
+            "icon": "Data Transfer",
+            "title": "Raw Data Channel 1",
+            "txData": ":ACQ1:MEM?"
+        }
+    ],
+    "decoder": 2,
+    "frameDetection": 2,
+    "frameEnd": "\\n",
+    "frameParser": "/**\n * Splits a data frame into an array of elements using a comma separator.\n *\n * Use this function to break a string (like \"value1,value2,value3\") into\n * individual pieces, which can then be displayed or processed in your project.\n *\n * @param[in]  frame   A string containing the data frame.\n *                     Example: \"value1,value2,value3\"\n *\n * @return     An array of strings with the split elements.\n *             Example: [\"value1\", \"value2\", \"value3\"]\n *\n * @note You can declare global variables outside this function if needed\n *       for storing settings or keeping state between calls.\n */\nfunction atob(base64) {\n    const chars = \"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/\";\n    let str = \"\";\n    let buffer = 0;\n    let bits = 0;\n    for (let i = 0; i < base64.length; i++) {\n        const char = base64[i];\n        if (char === \"=\") break;\n        const value = chars.indexOf(char);\n        if (value === -1) throw new Error(\"Invalid character in Base64 string\");\n        buffer = (buffer << 6) | value;\n        bits += 6;\n        if (bits >= 8) {\n            bits -= 8;\n            str += String.fromCharCode((buffer >> bits) & 0xff);\n        }\n    }\n    return str;\n}\n\nlet isDataMissing = false;\nlet byteFrame = \"\";\nlet verticalScale;\nlet length;\n\nfunction parse(frame) {\n\n  try {\n    byteFrame += atob(frame);\n  } catch (e) {\n      console.error(\"Failed to decode base64 frame: \", e.message);\n  }\n\n  if (isDataMissing == false)\n  {\n    // Find the \"Vertical Scale\" pattern\n    let pattern = 'Vertical Scale,';\n    let startIndex = byteFrame.indexOf(pattern);\n\n    if (startIndex === -1) {\n      console.error(`Pattern '${pattern}' not found.`);\n      return null;\n    }\n  \n    startIndex += pattern.length;\n\n    // Find the next semicolon\n    let endIndex = byteFrame.indexOf(';', startIndex);\n\n    if (endIndex === -1) {\n      console.error(`Semicolon not found after: '${pattern}'.`);\n      return null;\n    }\n  \n    // Extract and decode the vertical scale string\n    let verticalScaleStr;\n    try {\n      verticalScaleStr = byteFrame.substring(startIndex, endIndex);\n    } catch (e) {\n      console.error(\"Vertical scale string could not be decoded.\", e.message);\n      return null;\n    }\n\n    // Convert vertical scale string to a floating-point number\n    try {\n      verticalScale = parseFloat(verticalScaleStr);\n      console.log(\"Floating-point number found:\", verticalScale);\n    } catch (e) {\n      console.error(\"Failed to convert the extracted bytes to a float.\", e.message);\n      return null;\n    }\n  \n    // Find the \"Waveform Data\" pattern\n    pattern = 'Waveform Data;\\n#';\n    startIndex = byteFrame.indexOf(pattern);\n\n    if (startIndex === -1) {\n      console.error(`Pattern '${pattern}' not found.`);\n      return null;\n    }\n  \n    startIndex += pattern.length;\n\n    // Read the number of digits for the length\n    let lengthNumDigits;\n    try {\n      lengthNumDigits = parseInt(byteFrame[startIndex]);\n      console.log(`Number of digits for length: ${lengthNumDigits}`);\n    } catch (e) {\n      console.error(\"Failed to convert number of digits for length.\", e.message);\n      return null;\n    }\n  \n    startIndex += 1;\n\n    // Read the length of the data\n    let lengthStr;\n    try {\n      lengthStr = byteFrame.substring(startIndex, startIndex + lengthNumDigits);\n    } catch (e) {\n      console.error(\"Data length string could not be decoded.\", e.message);\n      return null;\n    }\n  \n    try {\n      length = parseInt(lengthStr, 10);\n      console.log(`Length of Data: ${length}`);\n    } catch (e) {\n      console.error(\"Failed to read the data length.\", e.message);\n      return null;\n    }\n  \n    startIndex += lengthNumDigits;\n    byteFrame = byteFrame.substring(startIndex);\n    isDataMissing = true;\n    console.log(\"Waiting for channel data...\");\n  }\n  \n  if (isDataMissing == true)\n  {\n    if (byteFrame.length < length) {\n      console.log(\"Waiting for more channel data...\");  \n      return [];      \n    }\n    console.log(byteFrame.length);\n    console.log(length);\n    console.log(\"Processing channel data.\");  \n    let doubleList = [];\n    try {\n      let channelRaw = byteFrame.substring(0, length);\n    \n      // Parse the data into a list of floating-point numbers\n      for (let i = 0; i < length; i += 2) {\n        const intValue = (channelRaw[i].charCodeAt() << 8) |\n            channelRaw[i + 1].charCodeAt(); // Combine two bytes into an integer\n        // This shifting is a trick to get the correct sign\n        const signedValue = (intValue<<16)>>16;\n        doubleList.push((signedValue * verticalScale) / 25);\n      }\n      console.log(\"Received frame: \" + doubleList);\n    } catch (e) {\n      console.error(\"Failed to process channel data.\", e.message);\n      return null;        \n    }\n\n    isDataMissing = false;\n    byteFrame = byteFrame.substring(length);\n    return doubleList;\n  }\n}\n\n",
+    "frameStart": "#42000",
+    "groups": [
+        {
+            "datasets": [
+                {
+                    "alarm": 0,
+                    "fft": false,
+                    "fftSamples": 256,
+                    "fftSamplingRate": 100,
+                    "graph": false,
+                    "index": 1,
+                    "led": false,
+                    "ledHigh": 1,
+                    "log": false,
+                    "max": 0,
+                    "min": 0,
+                    "title": "New Dataset",
+                    "units": "",
+                    "value": "--.--",
+                    "widget": "",
+                    "xAxis": -1
+                }
+            ],
+            "title": "2000 Values",
+            "widget": ""
+        }
+    ],
+    "mapTilerApiKey": "",
+    "thunderforestApiKey": "",
+    "title": "Instek GDS-1054b"
+}
