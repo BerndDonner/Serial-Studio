@@ -30,14 +30,8 @@
       pkgsUnstable = import nixpkgs-unstable { inherit system; };
     in
       pkgs.mkShell {
-        packages = with pkgs; [
-          gcc14Stdenv
-          gdb
-          # coreutils
-          # gnumake
-          # ninja
-        ];
-        buildInputs = with pkgsUnstable; [
+
+        buildInputs = with pkgs; [
           qt6.full
           qt6.qtbase
           qt6.qtdoc
@@ -50,14 +44,12 @@
           qt6.qt5compat
           qt6.qtdeclarative
           qt6.qtquicktimeline
-          # qt6.qtbase
-          # qt6.qtquick3d
-          # qt6.qtdeclarative
           openssl
-          # qt6.wrapQtAppsHook
         ];
-        nativeBuildInputs = with pkgsUnstable;  [
+
+        nativeBuildInputs = with pkgs; [
           cmake
+          gcc14Stdenv
           pkg-config
           qt6.qttools
           qt6.wrapQtAppsHook
