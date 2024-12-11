@@ -26,7 +26,12 @@
     };
   } // {
     buildDevShell = system: let
-      pkgs = import nixpkgs { inherit system; };
+      pkgs = import nixpkgs {
+        inherit system;
+        config = {
+          qt.enable = true; # Enable Qt configuration globally
+        };
+      };
       pkgsUnstable = import nixpkgs-unstable { inherit system; };
     in
       pkgs.mkShell {
@@ -36,6 +41,7 @@
           qt6.qtbase
           qt6.qtdoc
           qt6.qtsvg
+          qt6.qtgraphs
           qt6.qtquick3d
           qt6.qtwebengine
           qt6.qtwayland
@@ -44,6 +50,8 @@
           qt6.qt5compat
           qt6.qtdeclarative
           qt6.qtquicktimeline
+          qt6.qtlocation
+          qt6.qtpositioning
           openssl
         ];
 
@@ -54,8 +62,8 @@
           qt6.qttools
           qt6.wrapQtAppsHook
         ];
+        QT_PLUGIN_PATH = "${pkgs.qt6.qtgraphs}/lib";
         # QT_PLUGIN_PATH = "${qtbase}/${qtbase.qtPluginPrefix}";
-
 
         # # set the environment variables that Qt apps expect
         # shellHook = ''
