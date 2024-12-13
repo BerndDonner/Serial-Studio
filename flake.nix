@@ -37,21 +37,22 @@
       pkgs.mkShell {
 
         buildInputs = with pkgs; [
-          qt6.full
+          # qt6.full
           qt6.qtbase
-          qt6.qtdoc
+          # qt6.qtdoc
           qt6.qtsvg
           qt6.qtgraphs
-          qt6.qtquick3d
-          qt6.qtwebengine
-          qt6.qtwayland
-          qt6.qtserialport
-          qt6.qtshadertools
-          qt6.qt5compat
-          qt6.qtdeclarative
-          qt6.qtquicktimeline
+          # qt6.qtquick3d
+          # qt6.qtwebengine
+          # qt6.qtwayland
+          # qt6.qtserialport
+          # qt6.qtshadertools
+          # qt6.qt5compat
+          # qt6.qtdeclarative
+          # qt6.qtquicktimeline
           qt6.qtlocation
-          qt6.qtpositioning
+          qt6.qtconnectivity
+          # qt6.qtpositioning
           openssl
         ];
 
