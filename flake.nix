@@ -24,6 +24,10 @@
       aarch64-linux.default = self.buildDevShell "aarch64-linux";
       x86_64-darwin.default = self.buildDevShell "x86_64-darwin";
     };
+
+    packages = {
+      x86_64-linux.default = self.buildPackage "x86_64-linux";
+    };
   } // {
     buildDevShell = system: let
       pkgs = import nixpkgs {
@@ -36,42 +40,29 @@
     in
       pkgs.mkShell {
 
-        buildInputs = with pkgs; [
-          # qt6.full
-          qt6.qtbase
-          # qt6.qtdoc
-          qt6.qtsvg
-          qt6.qtgraphs
-          # qt6.qtquick3d
-          # qt6.qtwebengine
-          # qt6.qtwayland
-          # qt6.qtserialport
-          # qt6.qtshadertools
-          # qt6.qt5compat
-          # qt6.qtdeclarative
-          # qt6.qtquicktimeline
-          qt6.qtlocation
-          qt6.qtconnectivity
-          # qt6.qtpositioning
-          openssl
+        inputsFrom = [ self.packages.${system}.default ];
+        
+        nativeBuildInputs = with pkgs; [
+          gdb
+          makeWrapper
+          bashInteractive
         ];
 
-        nativeBuildInputs = with pkgs; [
-          cmake
-          gcc14Stdenv
-          pkg-config
-          qt6.qttools
-          qt6.wrapQtAppsHook
-        ];
         QT_PLUGIN_PATH = "${pkgs.qt6.qtgraphs}/lib";
         # QT_PLUGIN_PATH = "${qtbase}/${qtbase.qtPluginPrefix}";
 
         # # set the environment variables that Qt apps expect
-        # shellHook = ''
-        #   bashdir=$(mktemp -d)
-        #   makeWrapper "$(type -p bash)" "$bashdir/bash" "''${qtWrapperArgs[@]}"
-        #   exec "$bashdir/bash"
-        # '';
+        shellHook = ''
+          bashdir=$(mktemp -d)
+          makeWrapper "$(type -p bash)" "$bashdir/bash" "''${qtWrapperArgs[@]}"
+          exec "$bashdir/bash"
+        '';
       };
+
+    buildPackage = system: let
+      pkgs = import nixpkgs { inherit system; };
+    in
+      pkgs.qt6Packages.callPackage ./build.nix {};
+    
   };
 }
